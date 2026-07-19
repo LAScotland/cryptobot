@@ -1,5 +1,103 @@
 {
   "active": true,
+  "activeVersion": {
+    "updatedAt": "2026-03-01T03:36:35.481Z",
+    "createdAt": "2026-03-01T03:36:35.480Z",
+    "versionId": "54cc818f-4d16-4377-b311-c6398b44ed2d",
+    "workflowId": "OLTLs6cIDbsGv1rl",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "triggerAtHour": 12
+              }
+            ]
+          }
+        },
+        "id": "202906fb-2c91-4945-96e8-650a6200ccf5",
+        "name": "Schedule Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          860,
+          800
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "diEnfRmbqiNJABwb",
+            "mode": "list",
+            "cachedResultName": "Average Price Generator"
+          },
+          "options": {}
+        },
+        "id": "cb4d4e36-5c7c-413b-aaf2-2beda6c8e20b",
+        "name": "Execute Workflow",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          1380,
+          800
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "fb55fd10-43c4-443a-9ba4-2af26238f72c",
+                "name": "summary_duration",
+                "value": "1 Day",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "249ac175-f6e2-4b1e-8ae7-317110b59636",
+        "name": "Edit Fields2",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1080,
+          800
+        ]
+      }
+    ],
+    "connections": {
+      "Schedule Trigger": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields2": {
+        "main": [
+          [
+            {
+              "node": "Execute Workflow",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "system migration",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "activeVersionId": "54cc818f-4d16-4377-b311-c6398b44ed2d",
   "connections": {
     "Schedule Trigger": {
       "main": [
@@ -103,8 +201,8 @@
   },
   "shared": [
     {
-      "createdAt": "2024-11-03T10:10:33.191Z",
       "updatedAt": "2024-11-03T10:10:33.191Z",
+      "createdAt": "2024-11-03T10:10:33.191Z",
       "role": "workflow:owner",
       "workflowId": "OLTLs6cIDbsGv1rl",
       "projectId": "BhdUeMHAyfNcD7eA"
