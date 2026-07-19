@@ -1,5 +1,67 @@
 {
-  "active": false,
+  "active": true,
+  "activeVersion": {
+    "updatedAt": "2026-03-01T03:36:35.481Z",
+    "createdAt": "2026-03-01T03:36:35.480Z",
+    "versionId": "6796e2e4-0649-4ab3-bece-760d9aa7fd67",
+    "workflowId": "ssbrlfAR6Ix0jnFa",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "88902b96-f2f6-4230-9706-8365e9466ffd",
+        "name": "Error Trigger",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          820,
+          440
+        ]
+      },
+      {
+        "parameters": {
+          "userKey": "ut43h4z2qbb6yyoaecknu8899rh78y",
+          "message": "=<b>{{$json.execution.error.message}}</b>\n{{ $json.execution.error.stack }}",
+          "priority": 0,
+          "additionalFields": {
+            "html": true,
+            "title": "={{ $json.workflow.name }}"
+          }
+        },
+        "id": "7c27f4ce-6034-4c2a-bdaa-5f592b6813a6",
+        "name": "Pushover",
+        "type": "n8n-nodes-base.pushover",
+        "typeVersion": 1,
+        "position": [
+          1040,
+          440
+        ],
+        "credentials": {
+          "pushoverApi": {
+            "id": "qmm7O1MHQ9s5cH25",
+            "name": "Pushover account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Error Trigger": {
+        "main": [
+          [
+            {
+              "node": "Pushover",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "system migration",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "activeVersionId": "6796e2e4-0649-4ab3-bece-760d9aa7fd67",
   "connections": {
     "Error Trigger": {
       "main": [
@@ -62,8 +124,8 @@
   },
   "shared": [
     {
-      "createdAt": "2023-10-13T08:31:45.607Z",
       "updatedAt": "2023-10-13T08:31:45.607Z",
+      "createdAt": "2023-10-13T08:31:45.607Z",
       "role": "workflow:owner",
       "workflowId": "ssbrlfAR6Ix0jnFa",
       "projectId": "BhdUeMHAyfNcD7eA"
