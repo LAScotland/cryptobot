@@ -1,5 +1,282 @@
 {
-  "active": false,
+  "active": true,
+  "activeVersion": {
+    "updatedAt": "2026-03-01T03:36:35.481Z",
+    "createdAt": "2026-03-01T03:36:35.480Z",
+    "versionId": "2803ff6e-fc4c-4374-9a4c-ee42c2556404",
+    "workflowId": "GSJ2qhKr4oQfGvcm",
+    "nodes": [
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT DISTINCT(\"orderId\") FROM public.trades WHERE time_hr >= now() - INTERVAL '24h'\n",
+          "options": {}
+        },
+        "id": "65911ae1-74c7-42d0-9a5a-a6849fcf27d8",
+        "name": "Postgres",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          900,
+          440
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "fieldsToSummarize": {
+            "values": [
+              {
+                "field": "symbol"
+              }
+            ]
+          },
+          "fieldsToSplitBy": "symbol",
+          "options": {}
+        },
+        "id": "c1864e0b-cf46-4f3a-89c1-4c7012673724",
+        "name": "Summarize",
+        "type": "n8n-nodes-base.summarize",
+        "typeVersion": 1,
+        "position": [
+          1480,
+          440
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "544036fc-0a2c-4e8e-864a-53e09d7c63b5",
+                "name": "spread_inc",
+                "value": "={{ (($json.count_symbol)-2)/5 > 0 ? ((($json.count_symbol)-2)/5) : 0 }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "5d082a03-ac74-45af-a532-3a61eb9857bc",
+        "name": "Edit Fields",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1700,
+          440
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "4734c7af-787f-45b1-ae70-8e798efe032d",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          760,
+          440
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM public.trades WHERE \"orderId\" = '{{ $json.orderId }}' LIMIT 1",
+          "options": {}
+        },
+        "id": "cbf60216-5ccd-470e-8d9c-53872c1dfe36",
+        "name": "Postgres1",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1120,
+          440
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "schema": {
+            "__rl": true,
+            "mode": "list",
+            "value": "public"
+          },
+          "table": {
+            "__rl": true,
+            "value": "spot_volitility",
+            "mode": "list",
+            "cachedResultName": "spot_volitility"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "symbol": "={{ $json.symbol.trim() }}",
+              "multiplier": "={{ $json.spread_inc }}"
+            },
+            "matchingColumns": [
+              "symbol"
+            ],
+            "schema": [
+              {
+                "id": "symbol",
+                "displayName": "symbol",
+                "required": true,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "min",
+                "displayName": "min",
+                "required": true,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "max",
+                "displayName": "max",
+                "required": true,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "multiplier",
+                "displayName": "multiplier",
+                "required": true,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "f89e0607-e739-4278-a0a9-e1d2f6e877f4",
+        "name": "Postgres2",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1960,
+          280
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        },
+        "disabled": true
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE public.spot_volitility \n  SET multiplier = {{ $json.spread_inc }}\n  WHERE symbol = '{{ $json.symbol }}';\n  \n  ",
+          "options": {}
+        },
+        "id": "02fcf386-6e22-4fd2-82c7-5b9dc7e285cd",
+        "name": "Postgres3",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1960,
+          440
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Postgres": {
+        "main": [
+          [
+            {
+              "node": "Postgres1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Summarize": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields": {
+        "main": [
+          [
+            {
+              "node": "Postgres2",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Postgres3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Postgres",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres1": {
+        "main": [
+          [
+            {
+              "node": "Summarize",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "system migration",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "activeVersionId": "2803ff6e-fc4c-4374-9a4c-ee42c2556404",
   "connections": {
     "Postgres": {
       "main": [
@@ -282,8 +559,8 @@
   },
   "shared": [
     {
-      "createdAt": "2024-10-21T10:47:01.163Z",
       "updatedAt": "2024-10-21T10:47:01.163Z",
+      "createdAt": "2024-10-21T10:47:01.163Z",
       "role": "workflow:owner",
       "workflowId": "GSJ2qhKr4oQfGvcm",
       "projectId": "BhdUeMHAyfNcD7eA"
