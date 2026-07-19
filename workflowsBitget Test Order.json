@@ -1,5 +1,7 @@
 {
   "active": false,
+  "activeVersion": null,
+  "activeVersionId": null,
   "connections": {
     "Query String": {
       "main": [
@@ -723,8 +725,8 @@
   },
   "shared": [
     {
-      "createdAt": "2024-11-11T08:19:15.612Z",
       "updatedAt": "2024-11-11T08:19:15.612Z",
+      "createdAt": "2024-11-11T08:19:15.612Z",
       "role": "workflow:owner",
       "workflowId": "jKvCbI1SBCvTLlBt",
       "projectId": "BhdUeMHAyfNcD7eA"
