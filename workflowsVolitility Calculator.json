@@ -1,5 +1,1755 @@
 {
-  "active": false,
+  "active": true,
+  "activeVersion": {
+    "updatedAt": "2026-03-08T08:48:53.000Z",
+    "createdAt": "2026-03-08T08:47:56.556Z",
+    "versionId": "1e5e6c6e-a229-4fd4-8e8d-6adc947de81f",
+    "workflowId": "wPxmsKOIBLEsBRga",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "7cd96f88-e3fc-4d66-8de8-f929bce1b569",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          2320,
+          432
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE public.spot_volitility SET \n  \"max\" = {{ $json.max_price }},\n  \"min\" = {{ $json.min_price }},\n  \"average\" = {{ $json.avg_price }}\nWHERE symbol = '{{ $json.symbol.trim() }}';",
+          "options": {}
+        },
+        "id": "415779ec-d9aa-497f-a507-6248ec5aebf4",
+        "name": "Postgres1",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2768,
+          -96
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT a.*, b.\"free\",b.\"locked\" FROM public.spot_volitility a\n  INNER JOIN assets_details b\n  ON a.symbol LIKE b.asset || '%'\nORDER BY symbol ASC;",
+          "options": {}
+        },
+        "id": "30538135-7db1-454d-b552-35693713bb85",
+        "name": "Postgres2",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2304,
+          640
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH latest_assets AS (\n    SELECT \"time_hr\", \"BTC\", \"ETH\", \"XRP\"\n    FROM \"assets\"\n    ORDER BY \"time_hr\" DESC\n    LIMIT 1\n),\nlatest_assets_gbp AS (\n    SELECT \"time_hr\", \"BTC\", \"ETH\", \"XRP\"\n    FROM \"assets_gbp\"\n    ORDER BY \"time_hr\" DESC\n    LIMIT 1\n)\nSELECT \n    la.\"time_hr\" AS \"assets_time_hr\",\n    lag.\"time_hr\" AS \"assets_gbp_time_hr\",\n    jsonb_build_array(\n        jsonb_build_object('symbol', 'BTC', 'amount', jsonb_build_object('raw', la.\"BTC\", 'gbp', lag.\"BTC\")),\n        jsonb_build_object('symbol', 'ETH', 'amount', jsonb_build_object('raw', la.\"ETH\", 'gbp', lag.\"ETH\")),\n        jsonb_build_object('symbol', 'XRP', 'amount', jsonb_build_object('raw', la.\"XRP\", 'gbp', lag.\"XRP\"))\n    ) AS \"assets\"\nFROM \n    latest_assets la\nCROSS JOIN \n    latest_assets_gbp lag;\n",
+          "options": {}
+        },
+        "id": "630b2d81-0f88-4adc-a3f1-fc6ab0a815d4",
+        "name": "Postgres4",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2544,
+          80
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "fieldToSplitOut": "assets",
+          "options": {}
+        },
+        "id": "f51d61ba-ac6e-43a2-84c4-6b8a9637f090",
+        "name": "Split Out",
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          2768,
+          80
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE public.spot_volitility \n  SET order_val = {{\n  (() => {\n    const rate = ($json.amount.raw ? ($json.amount.gbp / $json.amount.raw) : 0);\n    if (!rate || !isFinite(rate)) return 0;\n\n    const total =\n      ($input.all()[0].json.amount.gbp + $input.all()[1].json.amount.gbp + $input.all()[2].json.amount.gbp);\n\n    const monthly = total / 12;\n    const capped = monthly < 300 ? monthly : 300;\n\n    return capped / rate;\n  })()\n}} \n  WHERE symbol LIKE '{{ $json.symbol }}%'",
+          "options": {}
+        },
+        "id": "195c05b2-dd84-4db8-bca1-31e611c05522",
+        "name": "Postgres5",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2944,
+          80
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT *  from public.orders WHERE symbol = '{{$json.symbol}}'",
+          "options": {}
+        },
+        "id": "032c0df8-a1d9-40ed-9342-37454e11ef56",
+        "name": "Postgres6",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          3120,
+          432
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "b6f50f23-49d1-48ed-a7d4-9f1f0900f763",
+        "name": "Loop Over Items",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          2800,
+          432
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [\n  {\n    \"symbol\": \"ETHBTC\"\n  },\n  {\n    \"symbol\": \"XRPETH\"\n  },\n  {\n    \"symbol\": \"XRPBTC\"\n  },\n  {\n    \"symbol\": \"BTCUSDT\"\n  },\n  {\n    \"symbol\": \"ETHUSDT\"\n  },\n  {\n    \"symbol\": \"XRPUSDT\"\n  }\n];"
+        },
+        "id": "ad5c49b5-4d0b-4370-a251-96d41d68aa8f",
+        "name": "Code",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2544,
+          432
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "a1581dac-9321-4259-9b09-a46e1ab3af86",
+        "name": "No Operation, do nothing1",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          4960,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT symbol, price AS last_price, time_hr FROM public.trades WHERE symbol ='{{ $json.symbol }}' ORDER BY time_hr DESC LIMIT 1",
+          "options": {}
+        },
+        "id": "724b8803-389e-44b0-84a8-357fa0148e2c",
+        "name": "Postgres7",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          3120,
+          240
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "c875ae90-6d9d-4db8-91e4-2097686f1d2b",
+        "name": "cancel_order",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          4960,
+          400
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "48f30e27-faba-42bc-8f1b-19f77cc469b9",
+        "name": "loop collector",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          4960,
+          1040
+        ]
+      },
+      {
+        "parameters": {
+          "action": "hmac",
+          "type": "SHA256",
+          "value": "=symbol={{ $json.symbol.trim() }}&timestamp={{ $json.timestamp }}",
+          "secret": "OiOpVYEpwyNetbOXK85p0kPnrWneFyWk61DqOBzE19hqNtru2eQfDScmITQWaYDh"
+        },
+        "id": "22b0aa1b-dadb-46f1-ba54-056917cbd626",
+        "name": "Crypto1",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          5344,
+          400
+        ],
+        "executeOnce": true
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "78246e2b-4c5f-4885-9847-0f6ce14b6183",
+                "name": "timestamp",
+                "value": "={{ Date.now() }}",
+                "type": "number"
+              },
+              {
+                "id": "c8fd336c-6d3b-407b-be52-940775ea25c5",
+                "name": "symbol",
+                "value": "={{ $json.symbol }}",
+                "type": "string"
+              },
+              {
+                "id": "1f6c4b46-d421-4f92-aadb-3aa0e89a7943",
+                "name": "orderId",
+                "value": "={{ $json.orderId }}",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "96bfd3d7-21c2-4cba-9cbe-74f98076ad70",
+        "name": "Query String1",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          5200,
+          400
+        ],
+        "executeOnce": true
+      },
+      {
+        "parameters": {
+          "command": "=screen -S {{ $json.symbol.trim().toLowerCase() }} -X stuff \"config ask_spread {{ Number($json.spread_up)*2 }} \\015 config bid_spread {{ Number($json.spread_down)*2 }} \\015 config order_amount {{ $json.order_val }} \\015\"; exit"
+        },
+        "id": "9cadda8d-39b1-478c-a891-7235e247e11f",
+        "name": "ethbtc volitility refresh1",
+        "type": "n8n-nodes-base.ssh",
+        "typeVersion": 1,
+        "position": [
+          2480,
+          912
+        ],
+        "executeOnce": false,
+        "credentials": {
+          "sshPassword": {
+            "id": "HLlP7P64bLQy2c0D",
+            "name": "SSH Password account"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "userKey": "ut43h4z2qbb6yyoaecknu8899rh78y",
+          "message": "={{ JSON.stringify($json) }}",
+          "priority": 0,
+          "additionalFields": {
+            "html": true,
+            "title": "=Tradebot3 Error"
+          }
+        },
+        "id": "33d1e12f-b794-442c-a82e-d5bf95d26f79",
+        "name": "Pushover",
+        "type": "n8n-nodes-base.pushover",
+        "typeVersion": 1,
+        "position": [
+          2640,
+          1184
+        ],
+        "credentials": {
+          "pushoverApi": {
+            "id": "qmm7O1MHQ9s5cH25",
+            "name": "Pushover account"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "dc16d391-4ab9-44d3-93b0-a9f7f5941a01",
+        "name": "No Operation, do nothing",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          2480,
+          1184
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "fda9a2b3-7431-4ce7-a175-c512e9c9dba1",
+        "name": "buy only",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          5968,
+          624
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "3944710d-958f-4aa0-85ab-867b572be330",
+        "name": "Sell Only",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          5968,
+          784
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "2184ae45-5271-406c-b3e4-b5e909862b14",
+                "leftValue": "={{ $json.spread_up }}",
+                "rightValue": "={{ $('variables_in').all()[$itemIndex].json.spread_up }}",
+                "operator": {
+                  "type": "number",
+                  "operation": "equals"
+                }
+              },
+              {
+                "id": "78a4305a-e1dc-4b14-8992-d16e39a58c16",
+                "leftValue": "={{ $json.spread_down }}",
+                "rightValue": "={{ $('variables_in').all()[$itemIndex].json.spread_down }}",
+                "operator": {
+                  "type": "number",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "or"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "id": "29ae58cd-f36c-41c6-8a85-e02dbe583b8c",
+        "name": "If",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2480,
+          672
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "7ba02a08-becd-405d-a284-d8a8aa84904a",
+                "name": "matching_asset",
+                "value": "={{ $('assets_detail').all().filter(item => item.json.symbol === ($json.side == \"BUY\" ? $json.symbol.slice(0,3) : $json.symbol.slice(3,6)))[0].json }}",
+                "type": "object"
+              },
+              {
+                "id": "f41f7343-c79c-4397-ac9a-344dad168ac8",
+                "name": "symbol",
+                "value": "={{ $json.symbol.trim() }}",
+                "type": "string"
+              },
+              {
+                "id": "c6761cca-b6d3-4b14-b878-086df1d5b8cc",
+                "name": "second_asset",
+                "value": "={{ $('assets_detail').all().filter(item => item.json.symbol === $json.symbol.slice(0,3))[0].json }}",
+                "type": "object"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "1e007d99-7dee-43aa-ad53-e22185e1832b",
+        "name": "Edit Fields4",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4560,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "userKey": "ut43h4z2qbb6yyoaecknu8899rh78y",
+          "message": "={{ JSON.stringify($input.all()) }}",
+          "priority": 0,
+          "additionalFields": {
+            "html": true,
+            "title": "=Binance Spot Orders Error"
+          }
+        },
+        "id": "9491fedb-b51f-44a0-9a10-2250abda4bd5",
+        "name": "Pushover1",
+        "type": "n8n-nodes-base.pushover",
+        "typeVersion": 1,
+        "position": [
+          6704,
+          432
+        ],
+        "credentials": {
+          "pushoverApi": {
+            "id": "qmm7O1MHQ9s5cH25",
+            "name": "Pushover account"
+          }
+        },
+        "disabled": true
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "e54c3ad9-e647-417f-9282-fc0fcab56f22",
+                "leftValue": "={{$json.symbol}}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "c42a8560-2898-4e63-bc0a-446859771511",
+        "name": "If2",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3504,
+          432
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "d7891a95-0228-4d63-bdf9-65dcb7b08918",
+        "name": "dump",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          3504,
+          624
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "7ba02a08-becd-405d-a284-d8a8aa84904a",
+                "name": "matching_asset",
+                "value": "={{ $('assets_detail').all().filter(item => item.json.symbol === ($json.side == \"BUY\" ? $json.symbol.slice(0,3) : $json.symbol.slice(3,6)))[0].json }}",
+                "type": "object"
+              },
+              {
+                "id": "f41f7343-c79c-4397-ac9a-344dad168ac8",
+                "name": "symbol",
+                "value": "={{ $json.symbol.trim() }}",
+                "type": "string"
+              },
+              {
+                "id": "c6761cca-b6d3-4b14-b878-086df1d5b8cc",
+                "name": "second _asset",
+                "value": "={{ $('assets_detail').all().filter(item => item.json.symbol === $json.symbol.slice(0,3))[0].json }}",
+                "type": "object"
+              },
+              {
+                "id": "2c6e3131-b570-40a1-a887-75a0c4f8e395",
+                "name": "last_price",
+                "value": "={{ $('assets_detail').all().filter(item => item.json.symbol === ($json.symbol.slice(0,3)))[0].json.rate / $('assets_detail').all().filter(item => item.json.symbol === ($json.symbol.slice(3,6)))[0].json.rate }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "752ebffb-e8fa-4356-ab2e-c0205822d533",
+        "name": "Edit Fields8",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4560,
+          608
+        ]
+      },
+      {
+        "parameters": {
+          "method": "DELETE",
+          "url": "https://api.binance.com/api/v3/openOrders",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "symbol",
+                "value": "={{ $json.symbol.trim() }}"
+              },
+              {
+                "name": "signature",
+                "value": "={{ $json.data }}"
+              },
+              {
+                "name": "=timestamp",
+                "value": "={{ $json.timestamp }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "a3d46adf-85a4-4da8-8676-0a77ffcb21e6",
+        "name": "HTTP Request1",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          5712,
+          400
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "xPPmrpo7lNZEQD92",
+            "name": "Binance ApiKey"
+          },
+          "httpHeaderAuth": {
+            "id": "3flt4vHSgwMbnIA8",
+            "name": "Binance Header Auth"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {},
+        "id": "38bb0fa0-e05c-4810-9d66-3e5bddd892f0",
+        "name": "place new pair",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          4960,
+          704
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://api.binance.com/api/v3/exchangeInfo",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "symbols",
+                "value": "[\"ETHBTC\",\"XRPETH\",\"XRPBTC\",\"BTCUSDT\",\"ETHUSDT\",\"XRPUSDT\"]"
+              },
+              {
+                "name": "showPermissionSets",
+                "value": "false"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "0c8e4e3c-e3a5-424d-969c-7ed587a60c63",
+        "name": "exchange_info_get",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2544,
+          -656
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "xPPmrpo7lNZEQD92",
+            "name": "Binance ApiKey"
+          },
+          "httpHeaderAuth": {
+            "id": "3flt4vHSgwMbnIA8",
+            "name": "Binance Header Auth"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM public.spot_volitility ORDER BY symbol ASC;",
+          "options": {}
+        },
+        "id": "f39cec94-dce0-401a-998b-5222ef6ab3ba",
+        "name": "variables_in",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2544,
+          -480
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT asset AS symbol, \"free\", \"locked\", \"rate\" FROM assets_details ORDER BY asset ASC",
+          "options": {}
+        },
+        "id": "e7e2b39f-e46e-4834-8a12-a425518b3fbb",
+        "name": "assets_detail",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2544,
+          -288
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT a.*, b.\"free\",b.\"locked\" FROM public.spot_volitility a\n  INNER JOIN assets_details b\n  ON a.symbol LIKE b.asset || '%'\nORDER BY symbol ASC;",
+          "options": {}
+        },
+        "id": "1fb75428-f6e5-4c49-9d1e-57a56e9ec27b",
+        "name": "spread_details",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2800,
+          272
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "action": "hmac",
+          "type": "SHA256",
+          "value": "=symbol={{ $json.symbol.trim() }}&side={{ $json.side }}&type=LIMIT_MAKER&quantity={{ $json.quantity }}&price={{$json.order_price }}&timestamp={{ $json.timestamp }}",
+          "secret": "OiOpVYEpwyNetbOXK85p0kPnrWneFyWk61DqOBzE19hqNtru2eQfDScmITQWaYDh"
+        },
+        "id": "8b85512b-3a65-4e22-ab28-ed9ecb1ee4bc",
+        "name": "Crypto2",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          6448,
+          704
+        ],
+        "executeOnce": true
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "78246e2b-4c5f-4885-9847-0f6ce14b6183",
+                "name": "timestamp",
+                "value": "={{ Date.now() }}",
+                "type": "number"
+              },
+              {
+                "id": "048868bd-2c7c-42e1-bf22-ba781b8dde10",
+                "name": "quantity",
+                "value": "={{ Math.round($json.quantity * $json.lot_size)/$json.lot_size }}",
+                "type": "number"
+              },
+              {
+                "id": "7b1e9643-b0dc-420e-9af5-55f0609237e3",
+                "name": "order_price",
+                "value": "={{ $json.up_price !== undefined ? Math.round($json.up_price * $json.tick_size)/$json.tick_size : Math.round($json.down_price*$json.tick_size)/$json.tick_size }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "b2bac45f-f14d-47e0-af22-c4c33d9e08ed",
+        "name": "Query String2",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          6304,
+          704
+        ],
+        "executeOnce": true
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ Number($json.first_asset.free)*Number($json.first_asset.rate) >= 100 && Number($json.second_asset.free)*Number($json.second_asset.rate) >= 100 }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Pair"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "79c0f6f7-341c-41c0-ae4b-34891437fe0c",
+                      "leftValue": "={{ Number($json.first_asset.free)*Number($json.first_asset.rate) < 100 && Number($json.second_asset.free)*Number($json.second_asset.rate) >= 100 }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Buy"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "8e0d425a-1f3a-4903-9fa8-a8d8a33dd372",
+                      "leftValue": "={{ Number($json.first_asset.free)*Number($json.first_asset.rate) >= 100 && Number($json.second_asset.free)*Number($json.second_asset.rate) < 100 }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Sell"
+              }
+            ]
+          },
+          "options": {
+            "fallbackOutput": "extra"
+          }
+        },
+        "id": "d4c2b7ff-645d-45c8-9cd9-9d6e99e9eee4",
+        "name": "Switch1",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          5424,
+          704
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "7ba02a08-becd-405d-a284-d8a8aa84904a",
+                "name": "first_asset",
+                "value": "={{ $('assets_detail').all().filter(item => item.json.symbol === $json.symbol.slice(0,3))[0].json }}",
+                "type": "object"
+              },
+              {
+                "id": "dcac08c2-058e-4cea-ba8a-670249e2c924",
+                "name": "second_asset",
+                "value": "={{ $('assets_detail').all().filter(item => item.json.symbol === $json.symbol.slice(3,7))[0].json }}",
+                "type": "object"
+              },
+              {
+                "id": "f036e577-9602-4f0d-acae-29288aca3344",
+                "name": "spread_details",
+                "value": "={{ $('spread_details').all().filter(item => item.json.symbol === ($json.symbol.trim()))[0].json }}",
+                "type": "object"
+              },
+              {
+                "id": "a0070810-149d-4350-83ec-aebe6d5ee74c",
+                "name": "tick_size",
+                "value": "={{Math.round(1 / Number($('exchange_info').all().filter(item => item.json.symbol === $json.symbol.trim())[0].json.filters[0].tickSize)) }}",
+                "type": "number"
+              },
+              {
+                "id": "c602865f-719a-4abd-ad64-716c9bda30b5",
+                "name": "lot_size",
+                "value": "={{ Math.round(1 / $('exchange_info').all().filter(item => item.json.symbol === $json.symbol.trim())[0].json.filters[1].stepSize) }}",
+                "type": "number"
+              },
+              {
+                "id": "2de98eb7-3ce6-4ae9-9ade-d16367a36cb0",
+                "name": "last_price",
+                "value": "={{ Date.parse($json.time_hr) <= $now.minus(2, 'days') || $json.last_price == undefined ? $('avg_volitility').all().filter(item => item.json.symbol === $json.symbol)[0].json.latest_price : $json.last_price }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "cea5328b-2b22-48fb-8dcd-92d68694b1f1",
+        "name": "Edit Fields5",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          5200,
+          704
+        ]
+      },
+      {
+        "parameters": {
+          "fieldToSplitOut": "symbols",
+          "options": {}
+        },
+        "id": "11ebbe31-2e66-4aef-8183-6990fc870b1a",
+        "name": "exchange_info",
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          2720,
+          -656
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "a2d5114b-dddc-4ba3-a335-50dc3c4c1818",
+                "name": "side",
+                "value": "sell",
+                "type": "string"
+              },
+              {
+                "id": "089dce9e-aebe-4b0a-9987-07d9a8f4bda2",
+                "name": "quantity",
+                "value": "={{ $json.first_asset.free * $json.first_asset.rate >= 300 ? 300 / $json.first_asset.rate : ($json.first_asset.free * 0.9) / $json.first_asset.rate   }}",
+                "type": "number"
+              },
+              {
+                "id": "41c2064a-4ee7-4ed8-88f5-21c6d985572d",
+                "name": "up_price",
+                "value": "={{ Math.round((Number($json.last_price) * ((100 + Number($json.spread_details.spread_up))/100)) * $json.tick_size)/$json.tick_size }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "7f858d9f-3580-4517-ad6c-57eece67997a",
+        "name": "Edit Fields7",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          6080,
+          784
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "a2d5114b-dddc-4ba3-a335-50dc3c4c1818",
+                "name": "side",
+                "value": "buy",
+                "type": "string"
+              },
+              {
+                "id": "91b74c98-d7cd-471d-91c9-22c1f2e34242",
+                "name": "quantity",
+                "value": "={{ $json.second_asset.free * $json.second_asset.rate >= 300 ? 300 / $json.first_asset.rate : ($json.second_asset.free * 0.9) / $json.last_price   }}",
+                "type": "number"
+              },
+              {
+                "id": "2868edd4-35c1-436d-a1d1-66031fe4f444",
+                "name": "down_price",
+                "value": "={{ Math.round(Number($json.last_price) * ((100 - Number($json.spread_details.spread_down))/100) * $json.tick_size)/$json.tick_size }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "1f93c7c8-18b5-49b3-8a57-4a82c4864075",
+        "name": "Edit Fields6",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          6080,
+          624
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.binance.com/api/v3/order",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "symbol",
+                "value": "={{ $json.symbol.trim() }}"
+              },
+              {
+                "name": "signature",
+                "value": "={{ $json.data }}"
+              },
+              {
+                "name": "side",
+                "value": "={{ $json.side }}"
+              },
+              {
+                "name": "type",
+                "value": "LIMIT_MAKER"
+              },
+              {
+                "name": "quantity",
+                "value": "={{ $json.quantity }}"
+              },
+              {
+                "name": "price",
+                "value": "={{ $json.order_price }}"
+              },
+              {
+                "name": "timestamp",
+                "value": "={{ $json.timestamp }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "ff9b8c07-a338-4963-9f8f-ac3f624b1d5d",
+        "name": "HTTP Request2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          6592,
+          704
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "xPPmrpo7lNZEQD92",
+            "name": "Binance ApiKey"
+          },
+          "httpHeaderAuth": {
+            "id": "3flt4vHSgwMbnIA8",
+            "name": "Binance Header Auth"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "a150fba7-bea0-438e-af99-f19a3bb65695",
+                "leftValue": "={{ $json.matching_asset.free * $json.matching_asset.rate }}",
+                "rightValue": 100,
+                "operator": {
+                  "type": "number",
+                  "operation": "gte"
+                }
+              },
+              {
+                "id": "fe216345-54eb-4a3d-a2e6-82717e3b6584",
+                "leftValue": "={{ $json.second_asset.free * $json.second_asset.rate }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gte"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "id": "58afa017-5872-4640-a3e3-201aa97cd4e8",
+        "name": "If1",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          4752,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \n    ep.symbol,\n    MAX(ep.price) AS max_price,\n    MIN(ep.price) AS min_price,\n    AVG(ep.price) AS avg_price,\n    latest_price.latest_price\nFROM public.exchange_prices ep\nJOIN (\n    SELECT DISTINCT ON (symbol) symbol, price AS latest_price\n    FROM public.exchange_prices\n    WHERE time_hr >= now() - INTERVAL '180m'\n    ORDER BY symbol, time_hr DESC\n) latest_price ON ep.symbol = latest_price.symbol\nWHERE ep.time_hr >= now() - INTERVAL '180m'\nGROUP BY ep.symbol, latest_price.latest_price\nORDER BY ep.symbol DESC;\n",
+          "options": {}
+        },
+        "id": "1db56821-e0d3-456f-9f9e-8549d3e7c2e5",
+        "name": "avg_volitility",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2544,
+          -96
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "bf01ad6b-4547-4c5e-a75f-ba13c01fd249",
+                      "leftValue": "={{ $input.all()[0].json.time_hr <= $now.minus(2,'days') && $json.orderId != undefined }}",
+                      "rightValue": "={{ $now.minus(2,'days') }}",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "expired"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $input.all().length }}",
+                      "rightValue": 2,
+                      "operator": {
+                        "type": "number",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Pair Intact"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "05338493-a68d-4202-a67a-9539b42b89a3",
+                      "leftValue": "={{ $input.all().length == 1 && $json.orderId !== undefined }}",
+                      "rightValue": 1,
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Single Order"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "6ed7c8fb-62e5-4e18-af84-105ef8c7a9d0",
+                      "leftValue": "={{ $input.all()[0].json.orderId  }}",
+                      "rightValue": 0,
+                      "operator": {
+                        "type": "string",
+                        "operation": "notExists",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "No Orders"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "86e3cdaa-de0c-412e-8553-0800b87d6234",
+        "name": "Switch",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          3984,
+          432
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "fieldsToMatchString": "symbol",
+          "joinMode": "keepEverything",
+          "options": {}
+        },
+        "id": "f4cd1158-96e2-4752-aa42-4200e2df6b3b",
+        "name": "Merge",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          3280,
+          432
+        ]
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "variables_in",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Postgres4",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "avg_volitility",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "assets_detail",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "exchange_info_get",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Code",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres2": {
+        "main": [
+          [
+            {
+              "node": "If",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres4": {
+        "main": [
+          [
+            {
+              "node": "Split Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Out": {
+        "main": [
+          [
+            {
+              "node": "Postgres5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Items": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Postgres6",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Postgres7",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres7": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres6": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "No Operation, do nothing1": {
+        "main": [
+          [
+            {
+              "node": "loop collector",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "cancel_order": {
+        "main": [
+          [
+            {
+              "node": "Query String1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "loop collector": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Crypto1": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query String1": {
+        "main": [
+          [
+            {
+              "node": "Crypto1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ethbtc volitility refresh1": {
+        "main": [
+          [
+            {
+              "node": "No Operation, do nothing",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Pushover",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code": {
+        "main": [
+          [
+            {
+              "node": "spread_details",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "buy only": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields6",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sell Only": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields7",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If": {
+        "main": [
+          [
+            {
+              "node": "ethbtc volitility refresh1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields4": {
+        "main": [
+          [
+            {
+              "node": "If1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If2": {
+        "main": [
+          [
+            {
+              "node": "Switch",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "dump",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields8": {
+        "main": [
+          [
+            {
+              "node": "cancel_order",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Request1": {
+        "main": [
+          [
+            {
+              "node": "place new pair",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Pushover1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "place new pair": {
+        "main": [
+          [
+            {
+              "node": "loop collector",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Edit Fields5",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "exchange_info_get": {
+        "main": [
+          [
+            {
+              "node": "exchange_info",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Crypto2": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query String2": {
+        "main": [
+          [
+            {
+              "node": "Crypto2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch1": {
+        "main": [
+          [
+            {
+              "node": "buy only",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Sell Only",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "buy only",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Sell Only",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "loop collector",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields5": {
+        "main": [
+          [
+            {
+              "node": "Switch1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields7": {
+        "main": [
+          [
+            {
+              "node": "Query String2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields6": {
+        "main": [
+          [
+            {
+              "node": "Query String2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Request2": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Pushover1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If1": {
+        "main": [
+          [
+            {
+              "node": "cancel_order",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "loop collector",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "avg_volitility": {
+        "main": [
+          [
+            {
+              "node": "Postgres1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields8",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Operation, do nothing1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Edit Fields4",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "place new pair",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge": {
+        "main": [
+          [
+            {
+              "node": "If2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Luke Austin",
+    "name": "Version 1e5e6c6e",
+    "description": "",
+    "autosaved": true
+  },
+  "activeVersionId": "1e5e6c6e-a229-4fd4-8e8d-6adc947de81f",
   "connections": {
     "Execute Workflow Trigger": {
       "main": [
@@ -509,7 +2259,7 @@
       "typeVersion": 1,
       "position": [
         2320,
-        420
+        432
       ]
     },
     {
@@ -523,8 +2273,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2760,
-        -100
+        2768,
+        -96
       ],
       "credentials": {
         "postgres": {
@@ -544,7 +2294,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2300,
+        2304,
         640
       ],
       "executeOnce": true,
@@ -566,7 +2316,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2540,
+        2544,
         80
       ],
       "credentials": {
@@ -586,14 +2336,14 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        2760,
+        2768,
         80
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE public.spot_volitility \n  SET order_val = {{ ($input.all()[0].json.amount.gbp+$input.all()[1].json.amount.gbp+$input.all()[2].json.amount.gbp) / 12 < 300 ? (($input.all()[0].json.amount.gbp+$input.all()[1].json.amount.gbp+$input.all()[2].json.amount.gbp) / 12) / ($json.amount.gbp / $json.amount.raw) : 300 / ($json.amount.gbp / $json.amount.raw) }} \n  WHERE symbol LIKE '{{ $json.symbol }}%'",
+        "query": "UPDATE public.spot_volitility \n  SET order_val = {{\n  (() => {\n    const rate = ($json.amount.raw ? ($json.amount.gbp / $json.amount.raw) : 0);\n    if (!rate || !isFinite(rate)) return 0;\n\n    const total =\n      ($input.all()[0].json.amount.gbp + $input.all()[1].json.amount.gbp + $input.all()[2].json.amount.gbp);\n\n    const monthly = total / 12;\n    const capped = monthly < 300 ? monthly : 300;\n\n    return capped / rate;\n  })()\n}} \n  WHERE symbol LIKE '{{ $json.symbol }}%'",
         "options": {}
       },
       "id": "195c05b2-dd84-4db8-bca1-31e611c05522",
@@ -601,7 +2351,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2940,
+        2944,
         80
       ],
       "credentials": {
@@ -623,7 +2373,7 @@
       "typeVersion": 2.5,
       "position": [
         3120,
-        420
+        432
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -643,20 +2393,20 @@
       "typeVersion": 3,
       "position": [
         2800,
-        420
+        432
       ]
     },
     {
       "parameters": {
-        "jsCode": "return [\n  {\n    \"symbol\": \"ETHBTC\"\n  },\n  {\n    \"symbol\": \"XRPETH\"\n  },\n  {\n    \"symbol\": \"XRPBTC\"\n  }\n];"
+        "jsCode": "return [\n  {\n    \"symbol\": \"ETHBTC\"\n  },\n  {\n    \"symbol\": \"XRPETH\"\n  },\n  {\n    \"symbol\": \"XRPBTC\"\n  },\n  {\n    \"symbol\": \"BTCUSDT\"\n  },\n  {\n    \"symbol\": \"ETHUSDT\"\n  },\n  {\n    \"symbol\": \"XRPUSDT\"\n  }\n];"
       },
       "id": "ad5c49b5-4d0b-4370-a251-96d41d68aa8f",
       "name": "Code",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2540,
-        420
+        2544,
+        432
       ]
     },
     {
@@ -667,7 +2417,7 @@
       "typeVersion": 1,
       "position": [
         4960,
-        140
+        144
       ]
     },
     {
@@ -726,7 +2476,7 @@
       "type": "n8n-nodes-base.crypto",
       "typeVersion": 1,
       "position": [
-        5340,
+        5344,
         400
       ],
       "executeOnce": true
@@ -778,7 +2528,7 @@
       "typeVersion": 1,
       "position": [
         2480,
-        900
+        912
       ],
       "executeOnce": false,
       "credentials": {
@@ -805,7 +2555,7 @@
       "typeVersion": 1,
       "position": [
         2640,
-        1180
+        1184
       ],
       "credentials": {
         "pushoverApi": {
@@ -822,7 +2572,7 @@
       "typeVersion": 1,
       "position": [
         2480,
-        1180
+        1184
       ]
     },
     {
@@ -832,8 +2582,8 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        5960,
-        620
+        5968,
+        624
       ]
     },
     {
@@ -843,8 +2593,8 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        5960,
-        780
+        5968,
+        784
       ]
     },
     {
@@ -887,7 +2637,7 @@
       "typeVersion": 2.2,
       "position": [
         2480,
-        660
+        672
       ]
     },
     {
@@ -941,8 +2691,8 @@
       "type": "n8n-nodes-base.pushover",
       "typeVersion": 1,
       "position": [
-        6700,
-        420
+        6704,
+        432
       ],
       "credentials": {
         "pushoverApi": {
@@ -982,8 +2732,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        3500,
-        420
+        3504,
+        432
       ]
     },
     {
@@ -993,8 +2743,8 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        3500,
-        620
+        3504,
+        624
       ]
     },
     {
@@ -1036,7 +2786,7 @@
       "typeVersion": 3.4,
       "position": [
         4560,
-        600
+        608
       ]
     },
     {
@@ -1069,7 +2819,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        5700,
+        5712,
         400
       ],
       "alwaysOutputData": true,
@@ -1093,7 +2843,7 @@
       "typeVersion": 1,
       "position": [
         4960,
-        700
+        704
       ]
     },
     {
@@ -1106,7 +2856,7 @@
           "parameters": [
             {
               "name": "symbols",
-              "value": "[\"ETHBTC\",\"XRPETH\",\"XRPBTC\"]"
+              "value": "[\"ETHBTC\",\"XRPETH\",\"XRPBTC\",\"BTCUSDT\",\"ETHUSDT\",\"XRPUSDT\"]"
             },
             {
               "name": "showPermissionSets",
@@ -1121,8 +2871,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2540,
-        -660
+        2544,
+        -656
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -1147,7 +2897,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2540,
+        2544,
         -480
       ],
       "executeOnce": true,
@@ -1169,8 +2919,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2540,
-        -280
+        2544,
+        -288
       ],
       "credentials": {
         "postgres": {
@@ -1191,7 +2941,7 @@
       "typeVersion": 2.5,
       "position": [
         2800,
-        260
+        272
       ],
       "executeOnce": true,
       "credentials": {
@@ -1213,8 +2963,8 @@
       "type": "n8n-nodes-base.crypto",
       "typeVersion": 1,
       "position": [
-        6440,
-        700
+        6448,
+        704
       ],
       "executeOnce": true
     },
@@ -1250,8 +3000,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        6300,
-        700
+        6304,
+        704
       ],
       "executeOnce": true
     },
@@ -1344,8 +3094,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        5420,
-        700
+        5424,
+        704
       ]
     },
     {
@@ -1361,7 +3111,7 @@
             {
               "id": "dcac08c2-058e-4cea-ba8a-670249e2c924",
               "name": "second_asset",
-              "value": "={{ $('assets_detail').all().filter(item => item.json.symbol === $json.symbol.slice(3,6))[0].json }}",
+              "value": "={{ $('assets_detail').all().filter(item => item.json.symbol === $json.symbol.slice(3,7))[0].json }}",
               "type": "object"
             },
             {
@@ -1399,7 +3149,7 @@
       "typeVersion": 3.4,
       "position": [
         5200,
-        700
+        704
       ]
     },
     {
@@ -1413,7 +3163,7 @@
       "typeVersion": 1,
       "position": [
         2720,
-        -660
+        -656
       ]
     },
     {
@@ -1449,7 +3199,7 @@
       "typeVersion": 3.4,
       "position": [
         6080,
-        780
+        784
       ]
     },
     {
@@ -1485,7 +3235,7 @@
       "typeVersion": 3.4,
       "position": [
         6080,
-        620
+        624
       ]
     },
     {
@@ -1534,8 +3284,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        6580,
-        700
+        6592,
+        704
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -1589,7 +3339,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        4740,
+        4752,
         400
       ]
     },
@@ -1604,8 +3354,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2540,
-        -100
+        2544,
+        -96
       ],
       "credentials": {
         "postgres": {
@@ -1725,8 +3475,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        3980,
-        420
+        3984,
+        432
       ]
     },
     {
@@ -1742,7 +3492,7 @@
       "typeVersion": 3,
       "position": [
         3280,
-        420
+        432
       ]
     }
   ],
@@ -1751,12 +3501,15 @@
     "executionOrder": "v1",
     "saveDataSuccessExecution": "none",
     "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "binaryMode": "separate"
   },
   "shared": [
     {
-      "createdAt": "2023-11-14T09:38:09.518Z",
       "updatedAt": "2023-11-14T09:38:09.518Z",
+      "createdAt": "2023-11-14T09:38:09.518Z",
       "role": "workflow:owner",
       "workflowId": "wPxmsKOIBLEsBRga",
       "projectId": "BhdUeMHAyfNcD7eA"
@@ -1765,6 +3518,6 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 0,
-  "updatedAt": "2024-12-05T16:24:55.000Z",
-  "versionId": "cce7f3ba-da4c-46fe-af1f-f05894fbfe04"
+  "updatedAt": "2026-03-08T09:20:48.604Z",
+  "versionId": "1e5e6c6e-a229-4fd4-8e8d-6adc947de81f"
 }
