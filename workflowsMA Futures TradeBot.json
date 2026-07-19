@@ -1,5 +1,2731 @@
 {
-  "active": false,
+  "active": true,
+  "activeVersion": {
+    "updatedAt": "2026-03-01T03:36:35.481Z",
+    "createdAt": "2026-03-01T03:36:35.480Z",
+    "versionId": "c2a59a30-31ee-440d-9c2f-e5a237cea6b3",
+    "workflowId": "DZXDaMK2Qv2dCyGG",
+    "nodes": [
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM get_bollinger_bands('{{ $json.symbol }}') LIMIT 2",
+          "options": {}
+        },
+        "id": "c781a026-a0b3-4bf9-a6bf-00e4df49e744",
+        "name": "Postgres",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1840,
+          340
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "6d8de072-a4f8-48e6-a4aa-61217a05d630",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          900,
+          440
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [\n{\n\"symbol\": \n\"BTCUSDT\"\n}\n];"
+        },
+        "id": "96456034-53be-4015-b95b-bc32e31bebbf",
+        "name": "Code",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          440
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "b3611ed3-6b49-49d2-978f-196b1cf39d94",
+        "name": "Loop Over Items",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          1320,
+          140
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT time_hr,rsi, trendline AS slope\nFROM exchange_prices\nWHERE symbol = '{{ $json.symbol }}' ORDER BY time_hr DESC LIMIT 2",
+          "options": {}
+        },
+        "id": "0575c7a6-67e7-43c5-bcfb-85b589a92c69",
+        "name": "Postgres7",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1840,
+          160
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM public.config_futures",
+          "options": {}
+        },
+        "id": "89cd5fba-30e5-4341-b111-40011966afb3",
+        "name": "globals",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1320,
+          -60
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "720ad5af-73c4-43c0-aaa4-b0538a9b6f7b",
+        "name": "redirector",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          4840,
+          740
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "78246e2b-4c5f-4885-9847-0f6ce14b6183",
+                "name": "timestamp",
+                "value": "={{ Date.now() }}",
+                "type": "number"
+              },
+              {
+                "id": "70d90f4f-8472-44e7-a2f4-2d416988964b",
+                "name": "method",
+                "value": "POST",
+                "type": "string"
+              },
+              {
+                "id": "f47e6259-b78c-4225-9113-e457f18c7713",
+                "name": "requestPath",
+                "value": "/api/v2/mix/order/modify-plan-order",
+                "type": "string"
+              },
+              {
+                "id": "4feabfd4-a176-43c0-beb0-2dc002c8ee6c",
+                "name": "body",
+                "value": "={{ JSON.parse('{ \"clientOid\": \"'+$json.body.data.clientOid + '\", \"productType\": \"SUSDC-FUTURES\", \"newStopLossTriggerPrice\": '+$json.tp+'}') }}",
+                "type": "object"
+              },
+              {
+                "id": "35e8f57d-8153-4cc3-9499-efc23894a9d6",
+                "name": "symbol",
+                "value": "={{  $json.body.data[0].symbol }}",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "9ea897a0-fefe-4244-8bb5-95356a4f66fa",
+        "name": "Query String2",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          3200,
+          160
+        ]
+      },
+      {
+        "parameters": {
+          "action": "hmac",
+          "type": "SHA256",
+          "value": "={{ $json.timestamp + $json.method.toUpperCase() + $json.requestPath + JSON.stringify($json.body) }}",
+          "secret": "031d4b790ef3ff4d115c5da2196732f602ad467235cc299519810c58e62a0c41",
+          "encoding": "base64"
+        },
+        "id": "7b3b4365-aa3a-4d97-a8be-5fe0f9b88913",
+        "name": "Crypto2",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          3360,
+          160
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "c236fb3b-19d1-48f1-901d-ca038a8b2caa",
+        "name": "get account",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          1320,
+          -260
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "78246e2b-4c5f-4885-9847-0f6ce14b6183",
+                "name": "timestamp",
+                "value": "={{ Date.now() }}",
+                "type": "number"
+              },
+              {
+                "id": "70d90f4f-8472-44e7-a2f4-2d416988964b",
+                "name": "method",
+                "value": "GET",
+                "type": "string"
+              },
+              {
+                "id": "f47e6259-b78c-4225-9113-e457f18c7713",
+                "name": "requestPath",
+                "value": "/api/v2/mix/account/sub-account-assets",
+                "type": "string"
+              },
+              {
+                "id": "4feabfd4-a176-43c0-beb0-2dc002c8ee6c",
+                "name": "body",
+                "value": "=?productType=SUSDC-FUTURES",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "1a38193e-5e1f-4c70-91dc-deaaecde58f2",
+        "name": "Query String3",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1480,
+          -260
+        ]
+      },
+      {
+        "parameters": {
+          "action": "hmac",
+          "type": "SHA256",
+          "value": "={{ $json.timestamp + $json.method.toUpperCase() + $json.requestPath + $json.body }}",
+          "secret": "031d4b790ef3ff4d115c5da2196732f602ad467235cc299519810c58e62a0c41",
+          "encoding": "base64"
+        },
+        "id": "e5f55ada-65d0-4094-bf21-3948677b8251",
+        "name": "Crypto3",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          1620,
+          -260
+        ]
+      },
+      {
+        "parameters": {
+          "url": "=https://api.bitget.com{{ $json.requestPath }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "productType",
+                "value": "SUSDC-FUTURES"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "ACCESS-SIGN",
+                "value": "={{ $json.data }}"
+              },
+              {
+                "name": "ACCESS-TIMESTAMP",
+                "value": "={{ $json.timestamp }}"
+              },
+              {
+                "name": "ACCESS-PASSPHRASE",
+                "value": "Inferno123"
+              },
+              {
+                "name": "locale",
+                "value": "en-US"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "id": "1aa0fbd6-a70d-47b3-bf22-be241a55ae9c",
+        "name": "HTTP Request3",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1760,
+          -260
+        ],
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "xPPmrpo7lNZEQD92",
+            "name": "Binance ApiKey"
+          },
+          "httpHeaderAuth": {
+            "id": "s7MYHJ2AeCAbH6Lb",
+            "name": "BitGet Api"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "78246e2b-4c5f-4885-9847-0f6ce14b6183",
+                "name": "timestamp",
+                "value": "={{ Date.now() }}",
+                "type": "number"
+              },
+              {
+                "id": "70d90f4f-8472-44e7-a2f4-2d416988964b",
+                "name": "method",
+                "value": "POST",
+                "type": "string"
+              },
+              {
+                "id": "f47e6259-b78c-4225-9113-e457f18c7713",
+                "name": "requestPath",
+                "value": "/api/v2/mix/order/place-order",
+                "type": "string"
+              },
+              {
+                "id": "4feabfd4-a176-43c0-beb0-2dc002c8ee6c",
+                "name": "body",
+                "value": "={{ JSON.parse('{ \"symbol\": \"'+ $json.symbol +'\", \"productType\": \"SUSDC-FUTURES\", \"marginMode\": \"isolated\", \"marginCoin\": \"SUSDC\", \"size\": \"'+ String($json.size) +'\", \"side\": \"' + $json.side + '\", \"orderType\": \"market\", \"reduceOnly\":\"NO\", \"oneWayMode\": true, \"presetStopLossPrice\": ' + $json.stopLoss + ', \"clientOid\": '+ $('next_orderId').first().json.next_orderid +' }') }}",
+                "type": "object"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "d34918f8-e185-427c-b328-c33409149343",
+        "name": "Query String",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          3500,
+          560
+        ]
+      },
+      {
+        "parameters": {
+          "action": "hmac",
+          "type": "SHA256",
+          "value": "={{ $json.timestamp + $json.method.toUpperCase() + $json.requestPath + JSON.stringify($json.body) }}",
+          "secret": "031d4b790ef3ff4d115c5da2196732f602ad467235cc299519810c58e62a0c41",
+          "encoding": "base64"
+        },
+        "id": "50373737-e3fb-4858-9ee3-ab22c5a7dd31",
+        "name": "Crypto",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          3620,
+          560
+        ]
+      },
+      {
+        "parameters": {
+          "action": "hmac",
+          "type": "SHA256",
+          "value": "={{ $json.timestamp + $json.method.toUpperCase() + $json.requestPath + $json.body }}",
+          "secret": "031d4b790ef3ff4d115c5da2196732f602ad467235cc299519810c58e62a0c41",
+          "encoding": "base64"
+        },
+        "id": "4927cb31-9bfb-4b9a-b387-4ae81a74958c",
+        "name": "Crypto4",
+        "type": "n8n-nodes-base.crypto",
+        "typeVersion": 1,
+        "position": [
+          2660,
+          -400
+        ],
+        "executeOnce": true
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "7d07e4e0-13c9-4456-b3f7-5b2f147130ca",
+                "leftValue": "={{ $json.body.data[0].holdSide }}",
+                "rightValue": "=short",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "d55efe7b-a736-44bd-be66-bc20ac0a1814",
+        "name": "If1",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3760,
+          -780
+        ]
+      },
+      {
+        "parameters": {
+          "userKey": "ut43h4z2qbb6yyoaecknu8899rh78y",
+          "message": "={{ JSON.stringify($json) }}",
+          "priority": 0,
+          "additionalFields": {
+            "html": true,
+            "title": "=Futures Order Update Error"
+          }
+        },
+        "id": "a3cbf659-0766-4a84-abd8-db6f50411718",
+        "name": "Pushover1",
+        "type": "n8n-nodes-base.pushover",
+        "typeVersion": 1,
+        "position": [
+          4260,
+          300
+        ],
+        "credentials": {
+          "pushoverApi": {
+            "id": "qmm7O1MHQ9s5cH25",
+            "name": "Pushover account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "schema": {
+            "__rl": true,
+            "mode": "list",
+            "value": "public"
+          },
+          "table": {
+            "__rl": true,
+            "value": "futures_orders",
+            "mode": "list",
+            "cachedResultName": "futures_orders"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "orderId": "={{ $json.body.data.clientOid }}",
+              "time_open": "={{ DateTime.fromMillis(Number($json.body.requestTime)) }}",
+              "bot_slope_open": "={{ $('root').item.json.slope }}",
+              "bot_price_open": "={{ $('root').item.json.price }}",
+              "bot_rsi_open": "={{ $('root').item.json.rsi }}",
+              "bot_state_open": "={{ $('root').item.json }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "orderId",
+                "displayName": "orderId",
+                "required": true,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "time_open",
+                "displayName": "time_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "dateTime",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "time_close",
+                "displayName": "time_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "dateTime",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "bot_price_open",
+                "displayName": "bot_price_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "bot_price_close",
+                "displayName": "bot_price_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "bot_rsi_open",
+                "displayName": "bot_rsi_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "bot_rsi_close",
+                "displayName": "bot_rsi_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "bot_slope_open",
+                "displayName": "bot_slope_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "bot_slope_close",
+                "displayName": "bot_slope_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "exchange_price_open",
+                "displayName": "exchange_price_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "exchange_price_close",
+                "displayName": "exchange_price_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "bot_state_open",
+                "displayName": "bot_state_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "object",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "bot_state_close",
+                "displayName": "bot_state_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "object",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "exchange_profit",
+                "displayName": "exchange_profit",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "b2c88d67-2818-4000-ba9d-be33790b1b1b",
+        "name": "Postgres1",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          4660,
+          340
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "1c034ccf-f5e8-4d48-aee3-45cdcedb49c8",
+        "name": "Place Order",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          2840,
+          580
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "schema": {
+            "__rl": true,
+            "mode": "list",
+            "value": "public"
+          },
+          "table": {
+            "__rl": true,
+            "value": "futures_orders",
+            "mode": "list",
+            "cachedResultName": "futures_orders"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "orderId": "={{ $json.body.data.successList[0].clientOid }}",
+              "bot_price_close": "={{ $('root').item.json.price }}",
+              "bot_rsi_close": "={{ $('root').item.json.rsi }}",
+              "bot_slope_close": "={{ $('root').item.json.slope }}",
+              "exchange_price_close": "={{ $('HTTP Request').item.json.body.data[0].markPrice }}",
+              "exchange_profit": "={{ $('HTTP Request').item.json.body.data[0].unrealizedPL - $('HTTP Request').item.json.body.data[0].deductedFee }}",
+              "bot_state_close": "={{ $('root').item.json }}",
+              "exchange_price_open": "={{ $('HTTP Request').item.json.body.data[0].openPriceAvg }}"
+            },
+            "matchingColumns": [
+              "orderId"
+            ],
+            "schema": [
+              {
+                "id": "orderId",
+                "displayName": "orderId",
+                "required": true,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "time_open",
+                "displayName": "time_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "dateTime",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "time_close",
+                "displayName": "time_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "dateTime",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "bot_price_open",
+                "displayName": "bot_price_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "bot_price_close",
+                "displayName": "bot_price_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "bot_rsi_open",
+                "displayName": "bot_rsi_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "bot_rsi_close",
+                "displayName": "bot_rsi_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "bot_slope_open",
+                "displayName": "bot_slope_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "bot_slope_close",
+                "displayName": "bot_slope_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "exchange_price_open",
+                "displayName": "exchange_price_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "exchange_price_close",
+                "displayName": "exchange_price_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "bot_state_open",
+                "displayName": "bot_state_open",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "object",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "bot_state_close",
+                "displayName": "bot_state_close",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "object",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "exchange_profit",
+                "displayName": "exchange_profit",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "c712ae28-d323-49f1-b1eb-ea19a716a772",
+        "name": "Postgres2",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          4120,
+          160
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "method": "={{$json.method}}",
+          "url": "=https://api.bitget.com{{ $json.requestPath }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "symbol",
+                "value": "={{ $('position_evaluation').item.json.symbol }}"
+              },
+              {
+                "name": "productType",
+                "value": "SUSDC-FUTURES"
+              },
+              {
+                "name": "clientOid",
+                "value": "={{ $('current_order_id').first().json.orderId }}"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "ACCESS-SIGN",
+                "value": "={{ $json.data }}"
+              },
+              {
+                "name": "ACCESS-TIMESTAMP",
+                "value": "={{ $json.timestamp }}"
+              },
+              {
+                "name": "ACCESS-PASSPHRASE",
+                "value": "Inferno123"
+              },
+              {
+                "name": "locale",
+                "value": "en-US"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "id": "2e8ef704-2814-48af-a61a-8a638e106fab",
+        "name": "HTTP Request",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2820,
+          -400
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "xPPmrpo7lNZEQD92",
+            "name": "Binance ApiKey"
+          },
+          "httpHeaderAuth": {
+            "id": "s7MYHJ2AeCAbH6Lb",
+            "name": "BitGet Api"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.bitget.com{{ $json.requestPath }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "ACCESS-SIGN",
+                "value": "={{ $json.data }}"
+              },
+              {
+                "name": "ACCESS-TIMESTAMP",
+                "value": "={{ $json.timestamp }}"
+              },
+              {
+                "name": "ACCESS-PASSPHRASE",
+                "value": "Inferno123"
+              },
+              {
+                "name": "locale",
+                "value": "en-US"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.body }}",
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "id": "f36d3f14-4da5-45b8-bc3a-e89847bdcd2f",
+        "name": "HTTP Request2",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3520,
+          160
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "xPPmrpo7lNZEQD92",
+            "name": "Binance ApiKey"
+          },
+          "httpHeaderAuth": {
+            "id": "s7MYHJ2AeCAbH6Lb",
+            "name": "BitGet Api"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \"orderId\" + 1 AS next_orderId FROM public.futures_orders ORDER BY \"orderId\" DESC LIMIT 1;\n",
+          "options": {}
+        },
+        "id": "353d2ac2-e23a-474c-a8c6-fb4e31abc3da",
+        "name": "next_orderId",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2860,
+          380
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "7f16004a-fd07-4f8a-80f2-e722032f56f3",
+                "leftValue": "={{ $json.body.data.state }}",
+                "rightValue": "filled",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "ed62f081-3373-4350-add5-49545d139512",
+        "name": "If2",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          3040,
+          -400
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "78246e2b-4c5f-4885-9847-0f6ce14b6183",
+                "name": "timestamp",
+                "value": "={{ Date.now() }}",
+                "type": "number"
+              },
+              {
+                "id": "70d90f4f-8472-44e7-a2f4-2d416988964b",
+                "name": "method",
+                "value": "GET",
+                "type": "string"
+              },
+              {
+                "id": "f47e6259-b78c-4225-9113-e457f18c7713",
+                "name": "requestPath",
+                "value": "/api/v2/mix/order/detail",
+                "type": "string"
+              },
+              {
+                "id": "4feabfd4-a176-43c0-beb0-2dc002c8ee6c",
+                "name": "body",
+                "value": "={{\"?symbol=\" + ($json.symbol == \"BTCUSDT\" ? \"SBTCSPERP\" : $json.symbol == \"ETHUSDC\" ? \"SETHSUSDC\" : \"SXRPSUSDT\") + \"&productType=SUSDC-FUTURES&clientOid=\"+$('current_order_id').first().json.orderId }}",
+                "type": "string"
+              },
+              {
+                "id": "35e8f57d-8153-4cc3-9499-efc23894a9d6",
+                "name": "symbol",
+                "value": "={{ $json.symbol == \"BTCUSDT\" ? \"SBTCSPERP\" : $json.symbol == \"ETHUSDT\" ? \"SETHSUSDT\" : \"SXRPSUSDT\" }}",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "2d6e622d-4011-467b-9559-faf7d969d462",
+        "name": "position_evaluation",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2500,
+          -400
+        ],
+        "executeOnce": true
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "fieldsToMatchString": "time_hr",
+          "options": {}
+        },
+        "id": "00b14358-eeed-4bb6-977b-6650004d4353",
+        "name": "Merge",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          2040,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "d64131dc-c6fa-47bb-ba35-5f2d2de444e3",
+                "name": "rsi",
+                "value": "={{ $json.rsi }}",
+                "type": "number"
+              },
+              {
+                "id": "6eab440f-61a8-402e-be07-26dad8d74c91",
+                "name": "symbol",
+                "value": "={{ $json.symbol }}",
+                "type": "string"
+              },
+              {
+                "id": "c5c302fb-f588-4b48-b4be-5f1ea11b0df7",
+                "name": "time_hr",
+                "value": "={{ $json.time_hr }}",
+                "type": "string"
+              },
+              {
+                "id": "a3d3d6fa-7141-45dd-a2ce-63f73e0f1f9e",
+                "name": "price",
+                "value": "={{ $json.price }}",
+                "type": "number"
+              },
+              {
+                "id": "bec81519-b208-4321-8924-c773b58b6815",
+                "name": "moving_average",
+                "value": "={{ $json.moving_average }}",
+                "type": "number"
+              },
+              {
+                "id": "df565cc0-0cfe-419f-af7a-ef9c0790d25a",
+                "name": "upper_band",
+                "value": "={{ $json.upper_band }}",
+                "type": "number"
+              },
+              {
+                "id": "4a59e5f5-b1cd-43ef-a67d-3b16e2c9590f",
+                "name": "lower_band",
+                "value": "={{ $json.lower_band }}",
+                "type": "number"
+              },
+              {
+                "id": "f042e31c-3dd5-4441-aa57-07985c19ddab",
+                "name": "upper_band_1_05",
+                "value": "={{ $json.upper_band_1_05 }}",
+                "type": "number"
+              },
+              {
+                "id": "81ffc92c-fd14-480d-85ff-ef49e70ef40f",
+                "name": "lower_band_1_05",
+                "value": "={{ $json.lower_band_1_05 }}",
+                "type": "number"
+              },
+              {
+                "id": "e2941650-d971-40d4-a7e7-33988f8955de",
+                "name": "upper_band_0_5025",
+                "value": "={{ $json.upper_band_0_5025 }}",
+                "type": "number"
+              },
+              {
+                "id": "abb47fe7-305b-4742-8868-50f14635c6eb",
+                "name": "lower_band_0_5025",
+                "value": "={{ $json.lower_band_0_5025 }}",
+                "type": "number"
+              },
+              {
+                "id": "fbf533b0-3ced-4b6b-a84c-aa8c413eb167",
+                "name": "slope",
+                "value": "={{ $json.slope  }}",
+                "type": "string"
+              },
+              {
+                "id": "e027c6e9-1473-4ff4-a72e-08f63a43e118",
+                "name": "squeeze",
+                "value": "={{ Math.round(((($json.upper_band - $json.lower_band)/$json.upper_band)*100)*100)/100}}",
+                "type": "number"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "5cd34df6-1c05-497f-bda4-66e0c971322b",
+        "name": "root",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2180,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return $('root').all()"
+        },
+        "id": "8269203a-fbd1-4aae-81b1-b7ae98ccb6e2",
+        "name": "Code1",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3440,
+          -580
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api.bitget.com{{ $json.requestPath }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "ACCESS-SIGN",
+                "value": "={{ $json.data }}"
+              },
+              {
+                "name": "ACCESS-TIMESTAMP",
+                "value": "={{ $json.timestamp }}"
+              },
+              {
+                "name": "ACCESS-PASSPHRASE",
+                "value": "Inferno123"
+              },
+              {
+                "name": "locale",
+                "value": "en-US"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.body }}",
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "id": "50208525-defd-4363-89ab-0336f7cc2bd2",
+        "name": "HTTP Request1",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3960,
+          560
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "httpQueryAuth": {
+            "id": "xPPmrpo7lNZEQD92",
+            "name": "Binance ApiKey"
+          },
+          "httpHeaderAuth": {
+            "id": "s7MYHJ2AeCAbH6Lb",
+            "name": "BitGet Api"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "f75de16f-b11f-4fdc-80bb-168bc8134b07",
+                "name": "side",
+                "value": "buy",
+                "type": "string"
+              },
+              {
+                "id": "bc8253b5-1ed1-4de0-8f3a-7687942af901",
+                "name": "size",
+                "value": "={{ $json.symbol == \"BTCUSDT\" ? 0.1 : $json.symbol == \"ETHUSDT\" ? 0.16 : 710}}",
+                "type": "number"
+              },
+              {
+                "id": "a8c64095-d9ab-4950-b09a-167f7bf18369",
+                "name": "symbol",
+                "value": "={{ \"SBTCSPERP\" }}",
+                "type": "string"
+              },
+              {
+                "id": "7797d2e7-90a4-4dc2-b6bd-8bc81c07abdf",
+                "name": "stopLoss",
+                "value": "={{Math.round((Number($json.price) * 0.995)*($json.symbol == \"BTCUSDT\" ? 1 : $json.symbol == \"ETHUSDT\" ? 10 : 1000))/($json.symbol == \"BTCUSDT\" ? 1 : $json.symbol == \"ETHUSDT\" ? 10 : 1000)}}",
+                "type": "number"
+              },
+              {
+                "id": "47ca3989-dc33-4386-86a7-7127ec4bd26a",
+                "name": "takeProfit",
+                "value": "={{Math.round((Number($json.price) * 1.025)*($json.symbol == \"BTCUSDT\" ? 1 : $json.symbol == \"ETHUSDT\" ? 10 : 1000))/($json.symbol == \"BTCUSDT\" ? 1 : $json.symbol == \"ETHUSDT\" ? 10 : 1000)}}",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "64714541-9cd3-464d-baa7-28a7a2a89de6",
+        "name": "buy_fields",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2700,
+          680
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "f75de16f-b11f-4fdc-80bb-168bc8134b07",
+                "name": "side",
+                "value": "sell",
+                "type": "string"
+              },
+              {
+                "id": "bc8253b5-1ed1-4de0-8f3a-7687942af901",
+                "name": "size",
+                "value": "={{ $json.symbol == \"BTCUSDT\" ? 0.1 : $json.symbol == \"ETHUSDT\" ? 0.016 : 71}}",
+                "type": "number"
+              },
+              {
+                "id": "a8c64095-d9ab-4950-b09a-167f7bf18369",
+                "name": "symbol",
+                "value": "={{ \"SBTCSPERP\" }}",
+                "type": "string"
+              },
+              {
+                "id": "e4e6fa00-d27a-4a42-bfba-40b9b769b0cf",
+                "name": "stopLoss",
+                "value": "={{Math.round((Number($json.price) * 1.005)*($json.symbol == \"BTCUSDT\" ? 1 : $json.symbol == \"ETHUSDT\" ? 10 : 1000))/($json.symbol == \"BTCUSDT\" ? 1 : $json.symbol == \"ETHUSDT\" ? 10 : 1000)}}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "088e2a77-6707-429c-a8ce-7b42277ec3bb",
+        "name": "sell_fields",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2700,
+          500
+        ]
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $input.all()[0].json.slope > 0 && $input.all()[1].json.slope <= 0 && $input.all()[0].rsi <= 45 }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "slope+rsi+"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "130e3884-63e1-408c-ac54-1d86c3628dbb",
+                      "leftValue": "={{ $input.all()[0].json.slope < 0 && $input.all()[1].json.slope >= 0 && $input.all()[0].rsi >= 55 }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "slope-rsi-"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "4f7f98fa-a6ef-4e98-aaf0-839de3635bfe",
+                      "leftValue": "={{ $input.all()[0].json.price >= $input.all()[0].json.upper_band && $input.all()[1].json.price < $input.all()[1].json.upper_band && $json.squeeze <= 0.6}}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "sq_bo+"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "22459cac-b904-407c-af3c-3e025f591cc6",
+                      "leftValue": "={{ $input.all()[0].json.price <= $input.all()[0].json.upper_band && $input.all()[1].json.price > $input.all()[1].json.upper_band && $json.squeeze <= 0.6}}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "sq_bo-"
+              }
+            ]
+          },
+          "options": {
+            "fallbackOutput": "extra"
+          }
+        },
+        "id": "43857d73-1575-408c-9a86-dad077d181f6",
+        "name": "Switch2",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          2460,
+          620
+        ],
+        "executeOnce": true
+      },
+      {
+        "parameters": {},
+        "id": "e56a85ea-6259-4405-8ed3-658827b349ea",
+        "name": "move TP",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          5080,
+          -40
+        ]
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "f4c4cb8b-9ca5-4b9b-9579-627d8c68655a",
+                      "leftValue": "={{ $('Code1').all()[0].json.price <=$('Code1').all()[0].json.lower_band && $('Code1').all()[1].json.price >= $('Code1').all()[1].json.lower_band}}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Lower Down"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "6283a803-5334-437a-8eef-611cea8fa3fe",
+                      "leftValue": "={{ $('Code1').all()[0].json.price <= $('Code1').all()[0].json.lower_band_1_05 && $('Code1').all()[1].json.price >= $('Code1').all()[1].json.lower_band_1_05 }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "LM Down"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "85db2955-6ebf-4fba-bec7-27d04e655f74",
+                      "leftValue": "={{ $('Code1').all()[0].json.price <= $('Code1').all()[0].json.moving_average && $('Code1').all()[1].json.price >= $('Code1').all()[1].json.moving_average }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "MA Down"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "c7e82f84-c14c-4ad1-a6e5-5a42a8303a7b",
+                      "leftValue": "={{ $('Code1').all()[0].json.price <= $('Code1').all()[0].json.upper_band_1_05 && $('Code1').all()[1].json.price >= $('Code1').all()[1].json.upper_band_1_05 }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "UM Down"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "7ffe219d-3fcb-45e4-9ce2-89e753bb8e51",
+                      "leftValue": "={{ $('Code1').all()[0].json.price <= $('Code1').all()[0].json.upper_band && $('Code1').all()[1].json.price >= $('Code1').all()[1].json.upper_band }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Upper Down"
+              }
+            ]
+          },
+          "options": {
+            "fallbackOutput": "extra",
+            "allMatchingOutputs": true
+          }
+        },
+        "id": "ae09b4c1-529b-4b10-8b36-7ac84b0303ea",
+        "name": "Sh Cases",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          3980,
+          -960
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT \"orderId\"  FROM public.futures_orders ORDER BY \"orderId\" DESC LIMIT 1;\n",
+          "options": {}
+        },
+        "id": "d65e326c-47d4-4dd4-8cd8-1e8feba767d2",
+        "name": "current_order_id",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1840,
+          0
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "a0ecd378-2f6d-4602-8bf7-d94d90032b1f",
+        "name": "No Operation, do nothing",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          2040,
+          -140
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "options": {}
+        },
+        "id": "7b05d87e-2464-4c59-87ca-5ecccfcceda3",
+        "name": "Merge1",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          3580,
+          -780
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.moving_average }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "257b8844-5412-460a-a325-a3cbe28755ad",
+        "name": "lm",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -1360
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.lower_band_1_05 }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "1998865a-9f8b-40e2-8792-708ab29f4dac",
+        "name": "l",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -1520
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.upper_band_1_05 }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "b5c25710-2286-4bea-8c3b-4ee105492d3d",
+        "name": "ma",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -1200
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.upper_band }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "6e85a8db-3b3b-4220-a96b-bc76d63cefc3",
+        "name": "um",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -1040
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.upper_band * 1.01 }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "84c08886-3302-4752-a79f-b0105060d724",
+        "name": "u",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -880
+        ]
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "f4c4cb8b-9ca5-4b9b-9579-627d8c68655a",
+                      "leftValue": "={{ $('Code1').all()[0].json.price >=$('Code1').all()[0].json.lower_band && $('Code1').all()[1].json.price <= $('Code1').all()[1].json.lower_band}}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Lower Up"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "6283a803-5334-437a-8eef-611cea8fa3fe",
+                      "leftValue": "={{ $('Code1').all()[0].json.price >= $('Code1').all()[0].json.lower_band_1_05 && $('Code1').all()[1].json.price <= $('Code1').all()[1].json.lower_band_1_05 }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "LM Up"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "85db2955-6ebf-4fba-bec7-27d04e655f74",
+                      "leftValue": "={{ $('Code1').all()[0].json.price >= $('Code1').all()[0].json.moving_average && $('Code1').all()[1].json.price <= $('Code1').all()[1].json.moving_average }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "MA Up"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "c7e82f84-c14c-4ad1-a6e5-5a42a8303a7b",
+                      "leftValue": "={{ $('Code1').all()[0].json.price >= $('Code1').all()[0].json.upper_band_1_05 && $('Code1').all()[1].json.price <= $('Code1').all()[1].json.upper_band_1_05 }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "UM Up"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "7ffe219d-3fcb-45e4-9ce2-89e753bb8e51",
+                      "leftValue": "={{ $('Code1').all()[0].json.price >= $('Code1').all()[0].json.upper_band && $('Code1').all()[1].json.price <= $('Code1').all()[1].json.upper_band }}",
+                      "rightValue": "",
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "true",
+                        "singleValue": true
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Upper Up"
+              }
+            ]
+          },
+          "options": {
+            "fallbackOutput": "extra",
+            "allMatchingOutputs": true
+          }
+        },
+        "id": "c1f21ca5-871c-46f9-8179-a403f3509528",
+        "name": "Lo Cases",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          3980,
+          -580
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE public.futures_orders SET\n  time_close = '{{ $('root').all()[1].json.time_hr }}',\n  bot_price_close = {{ $('root').all()[1].json.price }},\n  bot_rsi_close = {{ $('root').all()[1].json.rsi }},\n  bot_slope_close = {{ $('root').all()[1].json.slope }},\n  bot_state_close = '{{ JSON.stringify($('root').all()[1].json) }}',\n  exchange_profit = {{ $json.body.data.totalProfits }}\nWHERE\n  \"orderId\" = {{ $json.body.data.clientOid }} AND\n  time_close IS NULL;\n  ",
+          "options": {}
+        },
+        "id": "9712f5cb-ae16-4e96-963a-5a66ab95eca3",
+        "name": "Postgres3",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          3440,
+          -280
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "sxFt0uvtx3x5AcFz",
+            "name": "Databot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.lower_band }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "92925ed9-cd11-4e2a-bed0-1772467ce443",
+        "name": "lm1",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -540
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.moving_average }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "60db3015-b359-4d15-a7a9-e282319b5f10",
+        "name": "um1",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -220
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.upper_band_1_05 }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "d3fec229-c428-4d3f-bb22-50ae882bb706",
+        "name": "u1",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -60
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.lower_band * 0.99 }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "79faa143-ff0f-41ac-ade8-fec776371ba4",
+        "name": "l1",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -700
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "c659389c-89cf-4075-a356-d7a8225d3423",
+                "name": "tp",
+                "value": "={{ $json.lower_band_1_05 }}",
+                "type": "number"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "0fdf5e0e-652c-4fea-9e23-7763a6dae8e0",
+        "name": "ma1",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          4440,
+          -380
+        ]
+      }
+    ],
+    "connections": {
+      "Postgres": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Code",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "globals",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "get account",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Items": {
+        "main": [
+          [
+            {
+              "node": "No Operation, do nothing",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Postgres",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Postgres7",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "current_order_id",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres7": {
+        "main": [
+          [
+            {
+              "node": "Merge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "redirector": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query String2": {
+        "main": [
+          [
+            {
+              "node": "Crypto2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Crypto2": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get account": {
+        "main": [
+          [
+            {
+              "node": "Query String3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query String3": {
+        "main": [
+          [
+            {
+              "node": "Crypto3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Crypto3": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query String": {
+        "main": [
+          [
+            {
+              "node": "Crypto",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Crypto": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Crypto4": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Place Order": {
+        "main": [
+          [
+            {
+              "node": "Query String",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "next_orderId",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres2": {
+        "main": [
+          [
+            {
+              "node": "redirector",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Pushover1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Request": {
+        "main": [
+          [
+            {
+              "node": "If2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Request2": {
+        "main": [
+          [
+            {
+              "node": "redirector",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Postgres2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Postgres1": {
+        "main": [
+          [
+            {
+              "node": "redirector",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If2": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Code1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Postgres3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "position_evaluation": {
+        "main": [
+          [
+            {
+              "node": "Crypto4",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge": {
+        "main": [
+          [
+            {
+              "node": "root",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "root": {
+        "main": [
+          [
+            {
+              "node": "Switch2",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "position_evaluation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code1": {
+        "main": [
+          [
+            {
+              "node": "Merge1",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "HTTP Request1": {
+        "main": [
+          [
+            {
+              "node": "redirector",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Postgres1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "buy_fields": {
+        "main": [
+          [
+            {
+              "node": "Place Order",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "sell_fields": {
+        "main": [
+          [
+            {
+              "node": "Place Order",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If1": {
+        "main": [
+          [
+            {
+              "node": "Sh Cases",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Lo Cases",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch2": {
+        "main": [
+          [
+            {
+              "node": "sell_fields",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "buy_fields",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "buy_fields",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "sell_fields",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "redirector",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sh Cases": {
+        "main": [
+          [
+            {
+              "node": "l",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "lm",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "ma",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "um",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "u",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "redirector",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge1": {
+        "main": [
+          [
+            {
+              "node": "If1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "l": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "lm": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ma": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "um": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "u": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "move TP": {
+        "main": [
+          [
+            {
+              "node": "Query String2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Lo Cases": {
+        "main": [
+          [
+            {
+              "node": "l1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "lm1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "ma1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "um1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "u1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "redirector",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "lm1": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "um1": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "u1": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "ma1": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "l1": {
+        "main": [
+          [
+            {
+              "node": "move TP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "system migration",
+    "name": null,
+    "description": null,
+    "autosaved": false
+  },
+  "activeVersionId": "c2a59a30-31ee-440d-9c2f-e5a237cea6b3",
   "connections": {
     "Postgres": {
       "main": [
@@ -2732,8 +5458,8 @@
   },
   "shared": [
     {
-      "createdAt": "2024-11-04T09:08:40.835Z",
       "updatedAt": "2024-11-04T09:08:40.835Z",
+      "createdAt": "2024-11-04T09:08:40.835Z",
       "role": "workflow:owner",
       "workflowId": "DZXDaMK2Qv2dCyGG",
       "projectId": "BhdUeMHAyfNcD7eA"
